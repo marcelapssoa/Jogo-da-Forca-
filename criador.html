@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Criador de Listas para Jogo da Forca</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: #444; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { display: block; width: 100%; padding: 12px; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        #btnAdd { background-color: #007bff; }
+        #btnAdd:hover { background-color: #0056b3; }
+        #btnGenerate { background-color: #28a745; font-weight: bold; }
+        #btnGenerate:hover { background-color: #218838; }
+        #wordListContainer { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+        #wordList li { background: #f9f9f9; padding: 10px; border: 1px solid #eee; border-radius: 4px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        #wordList li .word-text { font-weight: bold; }
+        #wordList li .hint-text { font-style: italic; color: #555; margin-left: 20px; }
+        .remove-btn { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Palavras - Jogo da Forca</h1>
+        
+        <div class="form-group">
+            <label for="gameTitle">Título do Jogo:</label>
+            <input type="text" id="gameTitle" placeholder="Ex: FORCA: ANIMAIS DA FLORESTA">
+        </div>
+        
+        <hr>
+
+        <div class="form-group">
+            <label for="wordInput">Palavra:</label>
+            <input type="text" id="wordInput" placeholder="Digite a palavra em maiúsculas">
+        </div>
+        
+        <div class="form-group">
+            <label for="hintInput">Dica (opcional):</label>
+            <input type="text" id="hintInput" placeholder="Digite a dica para a palavra">
+        </div>
+        
+        <button id="btnAdd">Adicionar Palavra à Lista</button>
+        
+        <div id="wordListContainer">
+            <h2>Lista de Palavras Adicionadas</h2>
+            <ul id="wordList"></ul>
+        </div>
+        
+        <button id="btnGenerate">Gerar e Baixar arquivo `palavras.js`</button>
+    </div>
+
+    <script>
+        const gameTitleInput = document.getElementById('gameTitle');
+        const wordInput = document.getElementById('wordInput');
+        const hintInput = document.getElementById('hintInput');
+        const btnAdd = document.getElementById('btnAdd');
+        const btnGenerate = document.getElementById('btnGenerate');
+        const wordListUl = document.getElementById('wordList');
+        
+        let wordsArray = [];
+
+        function renderList() {
+            wordListUl.innerHTML = '';
+            wordsArray.forEach((item, index) => {
+                const li = document.createElement('li');
+                
+                const textContainer = document.createElement('div');
+                const wordSpan = document.createElement('span');
+                wordSpan.className = 'word-text';
+                wordSpan.textContent = item.word;
+                textContainer.appendChild(wordSpan);
+
+                if (item.dica) {
+                    const hintSpan = document.createElement('span');
+                    hintSpan.className = 'hint-text';
+                    hintSpan.textContent = `Dica: ${item.dica}`;
+                    textContainer.appendChild(hintSpan);
+                }
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn';
+                removeBtn.textContent = 'Remover';
+                removeBtn.onclick = () => {
+                    wordsArray.splice(index, 1);
+                    renderList();
+                };
+
+                li.appendChild(textContainer);
+                li.appendChild(removeBtn);
+                wordListUl.appendChild(li);
+            });
+        }
+
+        btnAdd.addEventListener('click', () => {
+            const word = wordInput.value.trim().toUpperCase();
+            const hint = hintInput.value.trim();
+            
+            if (!word) {
+                alert('Por favor, digite uma palavra.');
+                return;
+            }
+            
+            wordsArray.push({ word: word, dica: hint });
+            renderList();
+            
+            wordInput.value = '';
+            hintInput.value = '';
+            wordInput.focus();
+        });
+
+        btnGenerate.addEventListener('click', () => {
+            const title = gameTitleInput.value.trim();
+            if (!title) {
+                alert('Por favor, defina um título para o jogo.');
+                return;
+            }
+            if (wordsArray.length === 0) {
+                alert('Adicione pelo menos uma palavra à lista.');
+                return;
+            }
+
+            const gameData = {
+                titulo: title,
+                palavras: wordsArray
+            };
+
+            const fileContent = `const gameData = ${JSON.stringify(gameData, null, 4)};`;
+            
+            const blob = new Blob([fileContent], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'palavras.js';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>

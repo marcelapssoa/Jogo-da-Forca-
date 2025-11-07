@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Forca</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            color: #333;
+            
+            /* --- CÓDIGO DO FUNDO (BG) REINSERIDO --- */
+            background-image: url('assets/BG.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-color: #f0f0f0; /* Cor caso a imagem não carregue */
+
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .game-container { width: 100%; max-width: 700px; margin: auto; padding: 20px; background-color: rgba(255, 255, 255, 0.9); border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { color: #444; }
+        .hangman-box svg { width: 200px; height: 250px; }
+        .hangman-part { fill: none; stroke: #333; stroke-width: 4; stroke-linecap: round; opacity: 0; transition: opacity 0.3s ease-in-out; }
+        .hangman-part.visible { opacity: 1; }
+        .base { stroke: #663300; stroke-width: 6; }
+        #word-display { display: flex; justify-content: center; align-items: flex-end; flex-wrap: wrap; gap: 5px; margin: 30px 0; min-height: 50px; }
+        .letter-spot { width: 25px; height: 40px; border-bottom: 4px solid #555; display: inline-block; font-size: 2.2rem; line-height: 40px; text-transform: uppercase; font-family: 'Courier New', Courier, monospace; font-weight: bold; vertical-align: bottom; }
+        .char-space { width: 20px; height: 40px; display: inline-block; }
+        .char-revealed { width: auto; height: 40px; border-bottom: none; display: inline-block; font-size: 2.2rem; line-height: 40px; font-family: 'Courier New', Courier, monospace; font-weight: bold; vertical-align: bottom; padding: 0 2px; }
+        #hint-container { margin: 15px 0; min-height: 50px; }
+        #hint-display { margin-top: 10px; font-style: italic; color: #666; font-size: 1.1rem; }
+        #keyboard { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 500px; margin: 20px auto; }
+        #keyboard button { width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer; border: none; background-color: #FF780C; color: black; border-radius: 5px; transition: background-color 0.2s; }
+        #keyboard button:hover { background-color: #0056b3; }
+        #keyboard button:disabled { background-color: #9faab5; cursor: not-allowed; opacity: 0.7; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 100; }
+        .modal-overlay.show { opacity: 1; pointer-events: all; }
+        .modal-content { background: white; padding: 30px 40px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center; }
+        #reset-button, #start-button { font-size: 1.2rem; padding: 10px 20px; margin-top: 15px; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #reset-button { background-color: #28a745; } #reset-button:hover { background-color: #218838; }
+        #start-button { background-color: #007bff; } #start-button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay show" id="start-modal">
+        <div class="modal-content">
+            <h2 style="margin-top: 0;">Jogo da Forca</h2>
+            <p>Clique abaixo para começar o jogo.</p>
+            <button id="start-button">Começar Jogo!</button>
+        </div>
+    </div>
+    <div class="game-container">
+        <h1></h1>
+        <div class="hangman-box">
+             <svg viewBox="0 0 200 250">
+                 <line x1="20" y1="230" x2="100" y2="230" class="base" /><line x1="60" y1="230" x2="60" y2="20" class="base" /><line x1="60" y1="20" x2="150" y2="20" class="base" /><line x1="150" y1="20" x2="150" y2="50" class="base" /><circle cx="150" cy="80" r="30" class="hangman-part" /><line x1="150" y1="110" x2="150" y2="170" class="hangman-part" /><line x1="150" y1="130" x2="120" y2="100" class="hangman-part" /><line x1="150" y1="130" x2="180" y2="100" class="hangman-part" /><line x1="150" y1="170" x2="120" y2="200" class="hangman-part" /><line x1="150" y1="170" x2="180" y2="200" class="hangman-part" />
+             </svg>
+        </div>
+        <div id="word-display"></div>
+        <div id="hint-container"><p id="hint-display"></p></div>
+        <div id="keyboard"></div>
+    </div>
+    <div class="modal-overlay" id="game-modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Resultado</h2><p id="modal-message">Você venceu!</p><button id="reset-button">Jogar Novamente</button>
+        </div>
+    </div>
+    
+    <audio id="audio-win" src="assets/Audio/Efeito sonoro - Aplauso.mp3" preload="auto"></audio>
+    <audio id="audio-lose" src="assets/Audio/Efeito sonoro - Erro.mp3" preload="auto"></audio>
+    <audio id="audio-wrong" src="assets/Audio/Efeito - tecla errada.mp3" preload="auto"></audio>
+
+    <script src="assets/palavras.js"></script>
+
+    <script>
+        // --- LÓGICA DO JOGO ---
+        
+        // --- SELEÇÃO DOS ÁUDIOS REINSERIDA ---
+        const audioWin = document.getElementById('audio-win');
+        const audioLose = document.getElementById('audio-lose');
+        const audioWrong = document.getElementById('audio-wrong');
+
+        const wordDisplay = document.getElementById('word-display');
+        const keyboard = document.getElementById('keyboard');
+        const gameModal = document.getElementById('game-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const resetButton = document.getElementById('reset-button');
+        const hangmanParts = document.querySelectorAll('.hangman-part');
+        const startModal = document.getElementById('start-modal');
+        const startButton = document.getElementById('start-button');
+        const hintDisplay = document.getElementById('hint-display');
+        
+        document.querySelector('h1').textContent = gameData.titulo;
+        document.title = gameData.titulo;
+        const wordList = gameData.palavras;
+
+        const accentMap = { 'A': ['A', 'Á', 'À', 'Ã'], 'E': ['E', 'É', 'Ê'], 'I': ['I', 'Í'], 'O': ['O', 'Ó', 'Õ', 'Ô'], 'U': ['U', 'Ú'], 'C': ['C', 'Ç'] };
+        const guessableLettersRegex = /[A-ZÁÉÍÓÚÀÃÕÊÔÇ]/i;
+        let availableWordPool = [];
+        let selectedWord = "";
+        let selectedHint = "";
+        let correctLetters = [];
+        let wrongGuesses = 0;
+        const maxWrongGuesses = 6;
+
+        // --- FUNÇÃO PARA LIBERAR ÁUDIO REINSERIDA ---
+        function unlockAllAudio() {
+            audioWin.muted = true; audioLose.muted = true; audioWrong.muted = true;
+            audioWin.play().catch(() => {}); audioWin.pause();
+            audioLose.play().catch(() => {}); audioLose.pause();
+            audioWrong.play().catch(() => {}); audioWrong.pause();
+            audioWin.muted = false; audioLose.muted = false; audioWrong.muted = false;
+        }
+
+        function resetWordPool() { availableWordPool = [...wordList]; }
+        function startGame() {
+            correctLetters = [];
+            wrongGuesses = 0;
+            hangmanParts.forEach(part => part.classList.remove('visible'));
+            
+            // --- RESET DOS ÁUDIOS REINSERIDO ---
+            audioWin.pause(); audioWin.currentTime = 0;
+            audioLose.pause(); audioLose.currentTime = 0;
+            audioWrong.pause(); audioWrong.currentTime = 0;
+
+            if (availableWordPool.length === 0) { resetWordPool(); }
+            const randomIndex = Math.floor(Math.random() * availableWordPool.length);
+            const [chosenWordObject] = availableWordPool.splice(randomIndex, 1);
+            selectedWord = chosenWordObject.word;
+            selectedHint = chosenWordObject.dica;
+            if (selectedHint) { hintDisplay.textContent = `Dica: ${selectedHint}`; } 
+            else { hintDisplay.textContent = ''; }
+            displayWord();
+            createKeyboard();
+            gameModal.classList.remove('show');
+        }
+        function displayWord() {
+            wordDisplay.innerHTML = '';
+            selectedWord.split('').forEach(char => {
+                let htmlToAdd = '';
+                if (char === ' ') { htmlToAdd = '<span class="char-space"></span>'; } 
+                else if (guessableLettersRegex.test(char)) {
+                    const isGuessed = correctLetters.includes(char);
+                    htmlToAdd = `<span class="letter-spot">${isGuessed ? char : ''}</span>`;
+                } else { htmlToAdd = `<span class="char-revealed">${char}</span>`; }
+                wordDisplay.innerHTML += htmlToAdd;
+            });
+            checkGameWin();
+        }
+        function applyPenalty() {
+            wrongGuesses++;
+            // --- SOM DE ERRO REINSERIDO ---
+            audioWrong.currentTime = 0;
+            audioWrong.play().catch(e => console.warn("Aviso: Não foi possível tocar o som de erro.", e));
+            if (wrongGuesses <= maxWrongGuesses) { hangmanParts[wrongGuesses - 1].classList.add('visible'); }
+        }
+        function handleLetterGuess(letter, button) {
+            button.disabled = true;
+            const lettersToCheck = accentMap[letter] || [letter];
+            let foundMatch = false;
+            selectedWord.split('').forEach(wordChar => {
+                if (lettersToCheck.includes(wordChar)) { foundMatch = true; correctLetters.push(wordChar); }
+            });
+            if (foundMatch) { correctLetters = [...new Set(correctLetters)]; } 
+            else { applyPenalty(); }
+            displayWord();
+            if (wrongGuesses >= maxWrongGuesses) { endGame(false); }
+        }
+        function createKeyboard() {
+            keyboard.innerHTML = '';
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            alphabet.forEach(letter => {
+                const btn = document.createElement('button');
+                btn.textContent = letter;
+                btn.addEventListener('click', () => handleLetterGuess(letter, btn));
+                keyboard.appendChild(btn);
+            });
+        }
+        function checkGameWin() {
+            const allGuessableChars = selectedWord.split('').filter(char => guessableLettersRegex.test(char));
+            const won = allGuessableChars.length > 0 && allGuessableChars.every(char => correctLetters.includes(char));
+            if (won) { endGame(true); }
+        }
+        function endGame(didWin) {
+            keyboard.querySelectorAll('button').forEach(btn => btn.disabled = true);
+            
+            // --- SONS DE VITÓRIA/DERROTA REINSERIDOS ---
+            if (didWin) {
+                audioWin.play().catch(e => console.warn("Aviso: Não foi possível tocar o som de vitória.", e));
+            } else {
+                audioLose.play().catch(e => console.warn("Aviso: Não foi possível tocar o som de derrota.", e));
+            }
+
+            setTimeout(() => {
+                if (didWin) { modalTitle.textContent = "Parabéns!"; modalMessage.textContent = "Você acertou a palavra!"; } 
+                else { modalTitle.textContent = "Que pena!"; modalMessage.textContent = `Você perdeu. A palavra era: ${selectedWord}`; }
+                gameModal.classList.add('show');
+            }, 500);
+        }
+        startButton.addEventListener('click', () => {
+            // --- CHAMADA PARA LIBERAR ÁUDIOS REINSERIDA ---
+            unlockAllAudio();
+            startGame();
+            startModal.classList.remove('show');
+
+        });
+        resetButton.addEventListener('click', startGame);
+    </script>
+</body>
+</html>
