@@ -1,40 +1,52 @@
 const gameData = {
-    "titulo": "Vivendo perigosamente",
+    "titulo": "Mudar sem transformar",
     "palavras": [
         {
-            "word": "UNIVERSO",
+            "word": "FUSÃO",
             "dica": ""
         },
         {
-            "word": "SOL",
+            "word": "VAPORIZAÇÃO",
             "dica": ""
         },
         {
-            "word": "TERRA",
+            "word": "CONDENSAÇÃO",
             "dica": ""
         },
         {
-            "word": "LENDAS",
+            "word": "SOLIDIFICAÇÃO",
             "dica": ""
         },
         {
-            "word": "TEORIA",
+            "word": "PRESSÃO",
             "dica": ""
         },
         {
-            "word": "ASTRONOMIA",
+            "word": "TEMPERATURA",
             "dica": ""
         },
         {
-            "word": "ORIGEM",
+            "word": "MOLÉCULA",
             "dica": ""
         },
         {
-            "word": "CULTURA",
+            "word": "SÓLIDO",
             "dica": ""
         },
         {
-            "word": "TUPÃ",
+            "word": "LÍQUIDO",
+            "dica": ""
+        },
+        {
+            "word": "GASOSO",
+            "dica": ""
+        },
+        {
+            "word": "AGITAÇÃO",
+            "dica": ""
+        },
+        {
+            "word": "SUBLIMAÇÃO",
             "dica": ""
         }
     ]
